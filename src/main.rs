@@ -53,39 +53,24 @@ fn main() -> io::Result<()> {
             if magic_val != BMP_MAGIC {
                 return Err(io::Error::new(io::ErrorKind::InvalidData, "Not a BMP file"));
             }
-            let size_val = read_u32_le(&mut file)?;
-            let reserved1_val = read_u16_le(&mut file)?;
-            let reserved2_val = read_u16_le(&mut file)?;
-            let offset_val = read_u32_le(&mut file)?;
-            let dib_header_size_val = read_u32_le(&mut file)?;
-            let width_px_val = read_i32_le(&mut file)?;
-            let height_px_val = read_i32_le(&mut file)?;
-            let num_planes_val = read_u16_le(&mut file)?;
-            let bits_per_pixel_val = read_u16_le(&mut file)?;
-            let compression_val = read_u32_le(&mut file)?;
-            let image_size_bytes_val = read_u32_le(&mut file)?;
-            let x_resolution_ppm_val = read_i32_le(&mut file)?;
-            let y_resolution_ppm_val = read_i32_le(&mut file)?;
-            let num_colors_val = read_u32_le(&mut file)?;
-            let important_colors_val = read_u32_le(&mut file)?;
 
             loaded_bmp = BMPHeader {
                 magic: magic_val,
-                size: size_val,
-                reserved1: reserved1_val,
-                reserved2: reserved2_val,
-                offset: offset_val,
-                dib_header_size: dib_header_size_val,
-                width_px: width_px_val,
-                height_px: height_px_val,
-                num_planes: num_planes_val,
-                bits_per_pixel: bits_per_pixel_val,
-                compression: compression_val,
-                image_size_bytes: image_size_bytes_val,
-                x_resolution_ppm: x_resolution_ppm_val,
-                y_resolution_ppm: y_resolution_ppm_val,
-                num_colors: num_colors_val,
-                important_colors: important_colors_val,
+                size: read_u32_le(&mut file)?,
+                reserved1: read_u16_le(&mut file)?,
+                reserved2: read_u16_le(&mut file)?,
+                offset: read_u32_le(&mut file)?,
+                dib_header_size: read_u32_le(&mut file)?,
+                width_px: read_i32_le(&mut file)?,
+                height_px: read_i32_le(&mut file)?,
+                num_planes: read_u16_le(&mut file)?,
+                bits_per_pixel: read_u16_le(&mut file)?,
+                compression: read_u32_le(&mut file)?,
+                image_size_bytes: read_u32_le(&mut file)?,
+                x_resolution_ppm: read_i32_le(&mut file)?,
+                y_resolution_ppm: read_i32_le(&mut file)?,
+                num_colors: read_u32_le(&mut file)?,
+                important_colors: read_u32_le(&mut file)?,
             };
 
             println!("--- BMP Header ---");
