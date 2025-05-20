@@ -49,13 +49,14 @@ fn main() -> io::Result<()> {
 
     match File::open(filename) {
         Ok(mut file) => {
-            let magic_val = read_u16_le(&mut file)?;
-            if magic_val != BMP_MAGIC {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "Not a BMP file"));
-            }
-
             loaded_bmp = BMPHeader {
-                magic: magic_val,
+                magic: {
+                    let magic_val = read_u16_le(&mut file)?;
+                    if magic_val != BMP_MAGIC {
+                        return Err(io::Error::new(io::ErrorKind::InvalidData, "Not a BMP file"));
+                    }
+                    magic_val
+                },
                 size: read_u32_le(&mut file)?,
                 reserved1: read_u16_le(&mut file)?,
                 reserved2: read_u16_le(&mut file)?,
