@@ -1,6 +1,8 @@
 use std::io;
 use std::{fs::File, io::Read};
 
+const BMP_MAGIC: u16 = 0x4D42; // Big endian we convert to little endian later
+
 #[derive(Debug)]
 struct BMPHeader {
     magic: u16,            // Magic identifier: 0x4d42
@@ -21,6 +23,25 @@ struct BMPHeader {
     important_colors: u32, // Important colors
 }
 
+// It is apparently recommended I make handlers
+fn read_u16_le(reader: &mut impl Read) -> io::Result<u16> {
+    let mut buffer = [0u8; 2];
+    reader.read_exact(&mut buffer)?;
+    Ok(u16::from_le_bytes(buffer))
+}
+
+fn read_u32_le(reader: &mut impl Read) -> io::Result<u32> {
+    let mut buffer = [0u8; 4];
+    reader.read_exact(&mut buffer)?;
+    Ok(u32::from_le_bytes(buffer))
+}
+
+fn read_i32_le(reader: &mut impl Read) -> io::Result<i32> {
+    let mut buffer = [0u8; 4];
+    reader.read_exact(&mut buffer)?;
+    Ok(i32::from_le_bytes(buffer))
+}
+
 fn main() -> io::Result<()> {
     let filename = "6x6_24bit.bmp";
 
@@ -28,56 +49,43 @@ fn main() -> io::Result<()> {
 
     match File::open(filename) {
         Ok(mut file) => {
-            let mut magic_bytes = [0; 2];
-            file.read_exact(&mut magic_bytes)?;
-            let mut size_bytes = [0; 4];
-            file.read_exact(&mut size_bytes)?;
-            let mut reserved1_bytes = [0; 2];
-            file.read_exact(&mut reserved1_bytes)?;
-            let mut reserved2_bytes = [0; 2];
-            file.read_exact(&mut reserved2_bytes)?;
-            let mut offset_bytes = [0; 4];
-            file.read_exact(&mut offset_bytes)?;
-            let mut dib_header_size_bytes = [0; 4];
-            file.read_exact(&mut dib_header_size_bytes)?;
-            let mut width_px_bytes = [0; 4];
-            file.read_exact(&mut width_px_bytes)?;
-            let mut height_px_bytes = [0; 4];
-            file.read_exact(&mut height_px_bytes)?;
-            let mut num_planes_bytes = [0; 2];
-            file.read_exact(&mut num_planes_bytes)?;
-            let mut bits_per_pixel_bytes = [0; 2];
-            file.read_exact(&mut bits_per_pixel_bytes)?;
-            let mut compression_bytes = [0; 4];
-            file.read_exact(&mut compression_bytes)?;
-            let mut image_size_bytes_val = [0; 4];
-            file.read_exact(&mut image_size_bytes_val)?;
-            let mut x_resolution_ppm_bytes = [0; 4];
-            file.read_exact(&mut x_resolution_ppm_bytes)?;
-            let mut y_resolution_ppm_bytes = [0; 4];
-            file.read_exact(&mut y_resolution_ppm_bytes)?;
-            let mut num_colors_bytes = [0; 4];
-            file.read_exact(&mut num_colors_bytes)?;
-            let mut important_colors_bytes = [0; 4];
-            file.read_exact(&mut important_colors_bytes)?;
+            let magic_val = read_u16_le(&mut file)?;
+            if magic_val != BMP_MAGIC {
+                return Err(io::Error::new(io::ErrorKind::InvalidData, "Not a BMP file"));
+            }
+            let size_val = read_u32_le(&mut file)?;
+            let reserved1_val = read_u16_le(&mut file)?;
+            let reserved2_val = read_u16_le(&mut file)?;
+            let offset_val = read_u32_le(&mut file)?;
+            let dib_header_size_val = read_u32_le(&mut file)?;
+            let width_px_val = read_i32_le(&mut file)?;
+            let height_px_val = read_i32_le(&mut file)?;
+            let num_planes_val = read_u16_le(&mut file)?;
+            let bits_per_pixel_val = read_u16_le(&mut file)?;
+            let compression_val = read_u32_le(&mut file)?;
+            let image_size_bytes_val = read_u32_le(&mut file)?;
+            let x_resolution_ppm_val = read_i32_le(&mut file)?;
+            let y_resolution_ppm_val = read_i32_le(&mut file)?;
+            let num_colors_val = read_u32_le(&mut file)?;
+            let important_colors_val = read_u32_le(&mut file)?;
 
             loaded_bmp = BMPHeader {
-                magic: u16::from_le_bytes(magic_bytes),
-                size: u32::from_le_bytes(size_bytes),
-                reserved1: u16::from_le_bytes(reserved1_bytes),
-                reserved2: u16::from_le_bytes(reserved2_bytes),
-                offset: u32::from_le_bytes(offset_bytes),
-                dib_header_size: u32::from_le_bytes(dib_header_size_bytes),
-                width_px: i32::from_le_bytes(width_px_bytes),
-                height_px: i32::from_le_bytes(height_px_bytes),
-                num_planes: u16::from_le_bytes(num_planes_bytes),
-                bits_per_pixel: u16::from_le_bytes(bits_per_pixel_bytes),
-                compression: u32::from_le_bytes(compression_bytes),
-                image_size_bytes: u32::from_le_bytes(image_size_bytes_val),
-                x_resolution_ppm: i32::from_le_bytes(x_resolution_ppm_bytes),
-                y_resolution_ppm: i32::from_le_bytes(y_resolution_ppm_bytes),
-                num_colors: u32::from_le_bytes(num_colors_bytes),
-                important_colors: u32::from_le_bytes(important_colors_bytes),
+                magic: magic_val,
+                size: size_val,
+                reserved1: reserved1_val,
+                reserved2: reserved2_val,
+                offset: offset_val,
+                dib_header_size: dib_header_size_val,
+                width_px: width_px_val,
+                height_px: height_px_val,
+                num_planes: num_planes_val,
+                bits_per_pixel: bits_per_pixel_val,
+                compression: compression_val,
+                image_size_bytes: image_size_bytes_val,
+                x_resolution_ppm: x_resolution_ppm_val,
+                y_resolution_ppm: y_resolution_ppm_val,
+                num_colors: num_colors_val,
+                important_colors: important_colors_val,
             };
 
             println!("--- BMP Header ---");
